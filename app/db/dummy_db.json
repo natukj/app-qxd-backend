@@ -1,0 +1,24 @@
+{
+    "users": {
+        "johndoe": {
+            "username": "johndoe",
+            "full_name": "John Doe",
+            "email": "johndoe@example.com",
+            "hashed_password": "fakehashedsecret",
+            "projects": [
+                "modern-awards",
+                "modern-award-classification",
+                "fair-work-act"
+            ]
+        }
+    },
+    "projects": {
+        "modern-awards": {
+            "name": "modern-awards"
+        },
+        "modern-award-classification": {
+            "name": "modern-award-classification"
+        },
+        "fair-work-act": {}
+    }
+}
