@@ -8,13 +8,13 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
 async def groq_client_chat_completion_stream(
     messages: List[Dict[str, str]], 
-    model: str = "llama3-8b-8192"
+    model: str = "llama3-70b-8192"
 ) -> AsyncGenerator[str, None]:
     try:
         stream = await client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=200,
+            max_tokens=600,
             stream=True
         )
 
