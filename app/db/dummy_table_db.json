@@ -1,0 +1,151 @@
+{
+    "users": {
+        "johndoe": {
+            "projects": {
+                "modern-award-classification": {
+                    "rows": [
+                        {
+                            "id": "emp-2631e97a-617e-4fcc-8dc6-19996316de23",
+                            "checked": false,
+                            "Employee": "james",
+                            "EmployeeData": {
+                                "id": "emp-2631e97a-617e-4fcc-8dc6-19996316de23",
+                                "fullName": "james",
+                                "industry": "Livestock and Poultry",
+                                "subIndustry": "",
+                                "jobTitle": "Stationhand Cook",
+                                "jobDescription": "Prepares and cooks meals for station hands and other farm personnel. Maintains food stock levels and kitchen facilities.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Classification": "Madeup Award",
+                            "Award": "Level 2"
+                        },
+                        {
+                            "id": "emp-f83d173b-f3ff-43b1-8e98-2a3d565fff47",
+                            "checked": false,
+                            "Employee": "Jimmy D",
+                            "EmployeeData": {
+                                "id": "emp-f83d173b-f3ff-43b1-8e98-2a3d565fff47",
+                                "fullName": "Jimmy D",
+                                "industry": "Plumbing, Fire Fighting, and Pest Control",
+                                "subIndustry": "",
+                                "jobTitle": "Plumbing Labourer",
+                                "jobDescription": "Assists plumbers by performing tasks such as erecting and dismantling scaffolding, assisting with rigging, undertaking basic oxy cutting, executing shoring/trenching, undertaking site drainage and de-watering, safely handling waste, and using tools, plant and equipment requiring the exercise of skill and knowledge.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Classification": "Madeup Award",
+                            "Award": "Level 2"
+                        },
+                        {
+                            "id": "emp-a14cd66e-ce89-4bb1-b2ef-f99124a4a23a",
+                            "checked": false,
+                            "Employee": "Johnny Cash",
+                            "EmployeeData": {
+                                "id": "emp-a14cd66e-ce89-4bb1-b2ef-f99124a4a23a",
+                                "fullName": "Johnny Cash",
+                                "industry": "Construction Materials",
+                                "subIndustry": "",
+                                "jobTitle": "Log Segregator",
+                                "jobDescription": "Sorts and segregates logs by species, size and grade at harvesting sites and timber mills.",
+                                "qualifications": [],
+                                "yearsExperience": 2,
+                                "age": 35,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Classification": "Madeup Award",
+                            "Award": "Level 2"
+                        },
+                        {
+                            "id": "emp-97f0590a-3d9a-4df3-9ae6-3830ba7ee736",
+                            "checked": false,
+                            "Employee": "aaa fff ",
+                            "EmployeeData": {
+                                "id": "emp-97f0590a-3d9a-4df3-9ae6-3830ba7ee736",
+                                "fullName": "aaa fff ",
+                                "industry": "Aviation and Airport Services",
+                                "subIndustry": "",
+                                "jobTitle": "Cabin Crew Member",
+                                "jobDescription": "Responsible for the comfort and safety of passengers in their carriage by aircraft, in accordance with the standards and regulations determined by the employer. Duties include in-flight service, safety checks, emergency procedure assistance, and customer service.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Classification": "Madeup Award",
+                            "Award": "Level 2"
+                        },
+                        {
+                            "id": "emp-ad458216-80ee-4b3f-aaeb-91a5fad44883",
+                            "checked": false,
+                            "Employee": "james",
+                            "EmployeeData": {
+                                "id": "emp-ad458216-80ee-4b3f-aaeb-91a5fad44883",
+                                "fullName": "james",
+                                "industry": "Aviation and Airport Services",
+                                "subIndustry": "",
+                                "jobTitle": "Cabin Crew Manager",
+                                "jobDescription": "Responsible for supervising cabin crew members and managing all cabin activities including supply and delivery of in-flight product/entertainment in conjunction with overseeing customer and crew safety, and initiation and performance of emergency procedures when necessary onboard aircraft. Also performs duties associated with arrivals and departures of aircraft, as required.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Award": "Level 2",
+                            "Classification": "Madeup Award"
+                        },
+                        {
+                            "id": "emp-d2156c8f-77cd-4e4d-aba4-3e46b52f0841",
+                            "checked": false,
+                            "Employee": "john",
+                            "EmployeeData": {
+                                "id": "emp-d2156c8f-77cd-4e4d-aba4-3e46b52f0841",
+                                "fullName": "john",
+                                "industry": "Landscaping and Surveying",
+                                "subIndustry": "",
+                                "jobTitle": "Gardening Maintenance Worker",
+                                "jobDescription": "Follows standard operating procedures and works under direct supervision. Understands basic quality control and uses gardening tools with routine maintenance.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            },
+                            "Award": "Level 2",
+                            "Classification": "Madeup Award"
+                        },
+                        {
+                            "id": "emp-5820eba0-33cc-4e3a-9ac0-2d64497a9108",
+                            "checked": false,
+                            "Employee": "aa",
+                            "EmployeeData": {
+                                "id": "emp-5820eba0-33cc-4e3a-9ac0-2d64497a9108",
+                                "fullName": "aa",
+                                "industry": "Livestock and Poultry",
+                                "subIndustry": "",
+                                "jobTitle": "Station Cook's Offsider",
+                                "jobDescription": "Assists the station cook in meal preparation, cleaning and kitchen duties.",
+                                "qualifications": [],
+                                "yearsExperience": 0,
+                                "age": 15,
+                                "addedBy": "qxd",
+                                "status": "In progress"
+                            }
+                        }
+                    ],
+                    "columns": []
+                }
+            }
+        }
+    }
+}

@@ -77,6 +77,7 @@ async def generate_response(chat_response: ChatResponse):
         all_content += content
         yield content
     print(all_content)
+    chat_response.aiResponse.content = "" 
     yield "\n" + json.dumps(chat_response.model_dump())
 
 @router.post("/{project_id}")

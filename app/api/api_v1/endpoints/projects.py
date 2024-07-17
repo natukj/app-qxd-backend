@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, Any, Optional
+import json
 import db
 
 router = APIRouter()
@@ -10,6 +12,23 @@ router = APIRouter()
 # Use the same secret key and algorithm as in your login.py
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
+
+class Row(BaseModel):
+    id: str
+    checked: Optional[bool] = False
+    data: Dict[str, Any]
+
+class ColumnAdd(BaseModel):
+    name: str
+    additionalInfo: str
+
+class ColumnEdit(BaseModel):
+    oldName: str
+    newName: str
+    additionalInfo: str
+
+class RowsDelete(BaseModel):
+    rowIds: List[str]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -61,5 +80,69 @@ async def get_project(project_id: str, current_user: str = Depends(get_current_u
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         return project
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# modern award classification endpoints
+@router.get("/get/{project_id}/rows", response_model=List[Row])
+async def get_project_rows(project_id: str, current_user: str = Depends(get_current_user)):
+    try:
+        rows = db.get_project_rows(current_user, project_id)
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/get/{project_id}/rows/add")
+async def add_project_row(project_id: str, row_data: Dict[str, Any], current_user: str = Depends(get_current_user)):
+    async def generate():
+        try:
+            async for result in db.add_project_row(current_user, project_id, row_data):
+                yield json.dumps(result) + "\n"
+        except Exception as e:
+            yield json.dumps({"error": str(e)}) + "\n"
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+@router.post("/get/{project_id}/columns/add")
+async def add_project_column(
+    project_id: str, 
+    column_data: Dict[str, Any], 
+    rows: List[Dict[str, Any]],
+    current_user: str = Depends(get_current_user)
+):
+    column_name = column_data['name']
+    additional_info = column_data.get('additionalInfo', '')
+
+    async def generate():
+        try:
+            async for result in db.add_project_column(current_user, project_id, column_name, additional_info, rows):
+                yield json.dumps(result) + "\n"
+        except Exception as e:
+            yield json.dumps({"error": str(e)}) + "\n"
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+
+@router.put("/get/{project_id}/columns/edit", response_model=Dict[str, Any])
+async def edit_project_column(project_id: str, column: ColumnEdit, current_user: str = Depends(get_current_user)):
+    try:
+        updated_columns = db.edit_project_column(current_user, project_id, column.oldName, column.newName, column.additionalInfo)
+        return {"columns": updated_columns}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/get/{project_id}/columns/{column_name}", response_model=Dict[str, Any])
+async def delete_project_column(project_id: str, column_name: str, current_user: str = Depends(get_current_user)):
+    try:
+        updated_columns = db.delete_project_column(current_user, project_id, column_name)
+        return {"columns": updated_columns}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/get/{project_id}/rows/delete", response_model=Dict[str, Any])
+async def delete_project_rows(project_id: str, rows: RowsDelete, current_user: str = Depends(get_current_user)):
+    try:
+        remaining_rows = db.delete_project_rows(current_user, project_id, rows.rowIds)
+        return {"remainingRows": remaining_rows}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
