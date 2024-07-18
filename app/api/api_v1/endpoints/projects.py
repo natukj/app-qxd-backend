@@ -123,13 +123,25 @@ async def add_project_column(
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
-@router.put("/get/{project_id}/columns/edit", response_model=Dict[str, Any])
-async def edit_project_column(project_id: str, column: ColumnEdit, current_user: str = Depends(get_current_user)):
-    try:
-        updated_columns = db.edit_project_column(current_user, project_id, column.oldName, column.newName, column.additionalInfo)
-        return {"columns": updated_columns}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.put("/get/{project_id}/columns/edit")
+async def edit_project_column_endpoint(
+    project_id: str,
+    column_data: Dict[str, Any],
+    rows: List[Dict[str, Any]],
+    current_user: str = Depends(get_current_user)
+):
+    old_column_name = column_data['oldColumnName']
+    new_column_name = column_data['newColumnName']
+    additional_info = column_data['additionalInfo']
+    
+    async def generate():
+        try:
+            async for result in db.edit_project_column(current_user, project_id, old_column_name, new_column_name, additional_info, rows):
+                yield json.dumps(result) + "\n"
+        except Exception as e:
+            yield json.dumps({"error": str(e)}) + "\n"
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 @router.delete("/get/{project_id}/columns/{column_name}", response_model=Dict[str, Any])
 async def delete_project_column(project_id: str, column_name: str, current_user: str = Depends(get_current_user)):

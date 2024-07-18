@@ -137,27 +137,12 @@ async def determine_column_data(column_name: str, row_data: Dict[str, Any]) -> s
     # This is a placeholder. In a real scenario, this would involve specific logic for each column
     return f"{full_name}: {column_name}"
 
-def edit_project_column(user: str, project_id: str, old_name: str, new_name: str, additional_info: str) -> List[Dict[str, Any]]:
-    db = read_table_db()
-    if user not in db["users"] or project_id not in db["users"][user]["projects"]:
-        raise ValueError("Project not found")
+async def edit_project_column(user: str, project_id: str, old_column_name: str, new_column_name: str, additional_info: str, rows: List[Dict[str, Any]]) -> AsyncGenerator[Dict[str, Any], None]:
+    delete_project_column(user, project_id, old_column_name)
     
-    columns = db["users"][user]["projects"][project_id]["columns"]
-    for column in columns:
-        if column["name"] == old_name:
-            column["name"] = new_name
-            column["additionalInfo"] = additional_info
-            break
-    else:
-        raise ValueError("Column not found")
-    
-    # Update the column name in all rows
-    for row in db["users"][user]["projects"][project_id]["rows"]:
-        if old_name in row["data"]:
-            row["data"][new_name] = row["data"].pop(old_name)
-    
-    write_table_db(db)
-    return columns
+    async for result in add_project_column(user, project_id, new_column_name, additional_info, rows):
+        yield result
+
 
 def delete_project_column(user: str, project_id: str, column_name: str) -> List[Dict[str, Any]]:
     db = read_table_db()
