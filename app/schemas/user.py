@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, constr, Field, field_validator
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
 from uuid import UUID
 from app.schemas.base_schema import BaseSchema
@@ -25,26 +25,33 @@ class UserUpdate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: constr(min_length=8, max_length=64) # type: ignore
+    password: str = Field(..., min_length=8, max_length=64)
 
 class UserInDBBase(UserBase):
     id: Optional[UUID] = None
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # additional properties to return via API
 class User(UserInDBBase):
     hashed_password: bool = Field(default=False, alias="password")
+    totp_secret: bool = Field(default=False, alias="totp")
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
 
-    @field_validator("hashed_password", pre=True)
+    @field_validator("hashed_password")
     def evaluate_hashed_password(cls, hashed_password):
         return bool(hashed_password)
+    
+    @field_validator("totp_secret")
+    def evaluate_totp_secret(cls, totp_secret):
+        if totp_secret:
+            return True
+        return False
 
 # additional properties stored in DB
 class UserInDB(UserInDBBase):
-    hashed_password: str
+    hashed_password: Optional[str] = None
+    totp_secret: Optional[str] = None
+    totp_counter: Optional[int] = None
 

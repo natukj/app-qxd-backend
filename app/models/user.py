@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
 
-from app.db.base_class import Base
+from db.base_class import Base
 
 if TYPE_CHECKING:
     from . import Token
@@ -26,6 +26,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     hashed_password: Mapped[Optional[str]] = mapped_column(nullable=True)
     # AUTHENTICATION AND PERSISTENCE
+    totp_secret: Mapped[Optional[str]] = mapped_column(nullable=True)
+    totp_counter: Mapped[Optional[int]] = mapped_column(nullable=True)
     email_validated: Mapped[bool] = mapped_column(default=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     is_admin: Mapped[bool] = mapped_column(default=False)

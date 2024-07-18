@@ -20,6 +20,9 @@ python-multipart = "^0.0.9"
 tenacity = "^8.5.0"
 python-jose = "^3.3.0"
 pydantic-settings = "^2.3.4"
+sqlalchemy = "^2.0.31"
+passlib = "^1.7.4"
+greenlet = "^3.0.3"
 
 
 [build-system]

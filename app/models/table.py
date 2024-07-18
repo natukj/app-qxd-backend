@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from uuid import uuid4
 
-from app.db.base_class import Base
+from db.base_class import Base
 
 if TYPE_CHECKING:
     from .project import Project
