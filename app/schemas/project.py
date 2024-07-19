@@ -1,4 +1,4 @@
-from app.schemas.base_schema import UUIDSchema, BaseSchema
+from schemas.base_schema import UUIDSchema, BaseSchema
 from uuid import UUID
 
 class ProjectBase(BaseSchema):
@@ -12,8 +12,8 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(ProjectBase):
     pass
 
-class Project(UUIDSchema, ProjectBase):
+class ProjectSchema(UUIDSchema, ProjectBase):
     user_id: UUID
 
-class ProjectInDB(Project):
+class ProjectInDB(ProjectSchema):
     pass

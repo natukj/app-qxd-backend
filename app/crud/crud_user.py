@@ -3,11 +3,14 @@ from typing import Any, Dict, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.core.security import get_password_hash, verify_password
-from app.crud.base import CRUDBase
-from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserInDB, User as UserSchema
-from app.schemas.totp import NewTOTP
+from core.security import get_password_hash, verify_password
+from crud.base import CRUDBase
+from models.user import User
+from schemas.user import UserCreate, UserUpdate, UserInDB, User as UserSchema
+from schemas.totp import NewTOTP
+
+# from models import lazy_load
+# lazy_load()
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     async def get_by_email(self, db: AsyncSession, *, email: str) -> Optional[User]:

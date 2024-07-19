@@ -1,15 +1,34 @@
 from typing import AsyncGenerator, Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Form, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import crud, models, schemas
-from app.core.config import settings
-from app.db.session import SessionLocal
+from core.config import settings
+from db.session import SessionLocal
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/oauth")
+class OAuth2EmailPasswordRequestForm(OAuth2PasswordRequestForm):
+    def __init__(
+        self,
+        *,
+        grant_type: str = Form(default=None, regex="password"),
+        username: str = Form(),
+        email: str = Form(),
+        password: str = Form(),
+        scope: str = Form(default=""),
+        client_id: str | None = Form(default=None),
+        client_secret: str | None = Form(default=None),
+    ):
+        super().__init__(grant_type=grant_type, username=username, password=password, 
+                         scope=scope, client_id=client_id, client_secret=client_secret)
+        self.email = email
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/oauth",
+    auto_error=False
+)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:

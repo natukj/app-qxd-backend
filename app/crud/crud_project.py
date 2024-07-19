@@ -4,9 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_
 
-from app.crud.base import CRUDBase
-from app.models import Project, User
-from app.schemas.project import ProjectCreate, ProjectUpdate
+from crud.base import CRUDBase
+from models.project import Project
+from models.user import User
+from schemas.project import ProjectCreate, ProjectUpdate
+
+# from models import lazy_load
+# lazy_load()
 
 class CRUDProject(CRUDBase[Project, ProjectCreate, ProjectUpdate]):
     async def create(self, db: AsyncSession, *, obj_in: ProjectCreate, user: User) -> Project:

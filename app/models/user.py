@@ -9,8 +9,9 @@ from uuid import uuid4
 
 from db.base_class import Base
 
-if TYPE_CHECKING:
-    from . import Token
+#if TYPE_CHECKING:
+    # from . import Token
+
 
 class User(Base):
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
@@ -25,6 +26,7 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(index=True, nullable=True)
     email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     hashed_password: Mapped[Optional[str]] = mapped_column(nullable=True)
+    projects: Mapped[list["Project"]] = relationship(back_populates="user")
     # AUTHENTICATION AND PERSISTENCE
     totp_secret: Mapped[Optional[str]] = mapped_column(nullable=True)
     totp_counter: Mapped[Optional[int]] = mapped_column(nullable=True)
@@ -34,3 +36,6 @@ class User(Base):
     refresh_tokens: Mapped[list["Token"]] = relationship(
         foreign_keys="[Token.authenticates_id]", back_populates="authenticates", lazy="dynamic"
     )
+
+from . import Token
+from .project import Project

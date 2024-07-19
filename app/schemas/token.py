@@ -15,7 +15,7 @@ class RefreshTokenUpdate(RefreshTokenBase):
 class RefreshToken(RefreshTokenUpdate):
     model_config = ConfigDict(from_attributes=True)
 
-class Token(BaseModel):
+class TokenSchema(BaseModel):
     access_token: str
     refresh_token: Optional[str] = None
     token_type: str

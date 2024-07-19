@@ -5,22 +5,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt
 
 import crud, models, schemas
-from app.api import deps
-from app.core import security
-from app.core.config import settings
+from api import deps
+from core import security
+from core.config import settings
 
 router = APIRouter()
 
-@router.post("/oauth", response_model=schemas.Token)
+@router.post("/oauth", response_model=schemas.TokenSchema)
 async def login_with_oauth2(
     db: AsyncSession = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
-) -> schemas.Token:
+) -> schemas.TokenSchema:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
     user = await crud.user.authenticate(
-        db, username=form_data.username, password=form_data.password
+        db, email=form_data.username, password=form_data.password
     )
     if not form_data.password or not user or not crud.user.is_active(user):
         raise HTTPException(status_code=400, detail="Login failed; incorrect email or password")
@@ -37,30 +37,51 @@ async def login_with_oauth2(
         "token_type": "bearer",
     }
 
-@router.post("/signup", response_model=schemas.Token)
+@router.post("/signup", response_model=schemas.TokenSchema)
 async def signup_with_oauth2(
     db: AsyncSession = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
-) -> schemas.Token:
-    """
-    OAuth2 compatible token signup, get an access token for future requests
-    """
-    user = await crud.user.create(db, obj_in=form_data)
+) -> schemas.TokenSchema:
+    print("Received form data:", form_data.__dict__)
+    existing_user = await crud.user.get_by_email(db, email=form_data.username)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    user_in = schemas.UserCreate(
+        email=form_data.username,
+        password=form_data.password
+    )
+    user = await crud.user.create(db, obj_in=user_in)
     if not user:
         raise HTTPException(status_code=400, detail="Signup failed")
+    
+    access_token = security.create_access_token(subject=user.id)
     refresh_token = security.create_refresh_token(subject=user.id)
-    await crud.token.create(db=db, obj_in=refresh_token, user_obj=user)
+    
+    print(f"Debug - access_token: {access_token}")
+    print(f"Debug - refresh_token: {refresh_token}")
+    print(f"Debug - user.id: {user.id}")
+    try:
+        await crud.token.create(db=db, obj_in=refresh_token, user_obj=user)
+    except ValueError as e:
+        # Handle the case where the token already exists
+        print(f"Error creating token: {str(e)}")
+        await crud.user.remove(db=db, id=user.id)
+        raise HTTPException(status_code=400, detail="Token creation failed")
+    
     return {
-        "access_token": security.create_access_token(subject=user.id),
+        "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
 
-@router.post("/refresh", response_model=schemas.Token)
+@router.post("/refresh", response_model=schemas.TokenSchema)
 async def refresh_token(
     db: AsyncSession = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_refresh_user),
-) -> schemas.Token:
+) -> schemas.TokenSchema:
     """
     Refresh tokens for future requests
     """

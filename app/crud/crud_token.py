@@ -2,19 +2,29 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.crud.base import CRUDBase
-from app.models import User, Token
-from app.schemas import RefreshTokenCreate, RefreshTokenUpdate
-from app.core.config import settings
+from crud.base import CRUDBase
+from models.user import User
+from models.token import Token
+from schemas import RefreshTokenCreate, RefreshTokenUpdate
+from core.config import settings
+
+# from models import lazy_load
+# lazy_load()
 
 class CRUDToken(CRUDBase[Token, RefreshTokenCreate, RefreshTokenUpdate]):
-    async def create(self, db: AsyncSession, *, token: str, user: User) -> Token:
-        existing_token = await db.execute(select(Token).filter(Token.token == token, Token.authenticates == user))
+    async def create(self, db: AsyncSession, *, obj_in: str, user_obj: User) -> Token:
+        existing_token = await db.execute(
+            select(self.model).filter(
+                self.model.token == obj_in,
+                self.model.authenticates_id == user_obj.id
+            )
+        )
         if existing_token.scalars().first():
             raise ValueError("Token already exists for this user.")
-        
-        obj_in = RefreshTokenCreate(token=token, authenticates_id=user.id)
-        return await super().create(db=db, obj_in=obj_in)
+
+        # Create new token
+        new_token = RefreshTokenCreate(token=obj_in, authenticates_id=user_obj.id)
+        return await super().create(db=db, obj_in=new_token)
 
     async def get(self, db: AsyncSession, *, user: User, token: str) -> Optional[Token]:
         result = await db.execute(select(Token).filter(Token.token == token, Token.authenticates == user))

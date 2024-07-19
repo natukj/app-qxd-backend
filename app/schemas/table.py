@@ -1,4 +1,4 @@
-from app.schemas.base_schema import UUIDSchema, BaseSchema
+from schemas.base_schema import UUIDSchema, BaseSchema
 from typing import List, Dict, Any
 from uuid import UUID
 

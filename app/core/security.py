@@ -6,8 +6,8 @@ from passlib.context import CryptContext
 from passlib.totp import TOTP
 from passlib.exc import TokenError, MalformedTokenError
 
-from app.core.config import settings
-from app.schemas import NewTOTP
+from core.config import settings
+from schemas import NewTOTP
 
 """
 https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Authentication_Cheat_Sheet.md
@@ -24,8 +24,8 @@ Specifies minimum criteria:
 """
 
 pwd_context = CryptContext(
-    schemes=["argon2", "bcrypt"], deprecated="auto"
-)  # current defaults: $argon2id$v=19$m=65536,t=3,p=4, "bcrypt" is deprecated
+    schemes=["argon2"], deprecated="auto"
+)
 totp_factory = TOTP.using(secrets={"1": settings.TOTP_SECRET_KEY}, issuer=settings.SERVER_NAME, alg=settings.TOTP_ALGO)
 
 def create_access_token(*, subject: Union[str, Any], expires_delta: timedelta = None, force_totp: bool = False) -> str:

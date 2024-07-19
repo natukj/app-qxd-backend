@@ -3,9 +3,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.crud.base import CRUDBase
-from app.models import Table, Project
-from app.schemas.table import TableCreate, TableUpdate, ColumnSchema, RowSchema
+from crud.base import CRUDBase
+from models.table import Table
+from models.project import Project
+from schemas.table import TableCreate, TableUpdate, ColumnSchema, RowSchema
+
+# from models import lazy_load
+# lazy_load()
 
 class CRUDTable(CRUDBase[Table, TableCreate, TableUpdate]):
     async def create(self, db: AsyncSession, *, obj_in: TableCreate, project: Project) -> Table:

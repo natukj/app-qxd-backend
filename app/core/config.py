@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     TOTP_SECRET_KEY: str = secrets.token_urlsafe(32)
-    ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 30
+    ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 30 * 8 # 60 minutes * 8 hours = 8 hours (remove * 8 for 1 hour expiration in prod)
     REFRESH_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 30 # 60 minutes * 24 hours * 8 days = 8 days
     JWT_ALGO: str = "HS512"
     TOTP_ALGO: str = "SHA-1"

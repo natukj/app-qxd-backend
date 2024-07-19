@@ -8,8 +8,10 @@ from uuid import uuid4
 
 from db.base_class import Base
 
-if TYPE_CHECKING:
-    from .project import Project
+# if TYPE_CHECKING:
+#     from .project import Project
+
+from .project import Project
 
 class Table(Base):
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
@@ -41,6 +43,7 @@ class Row:
         self.id: str = id  # ID passed from the frontend
         self.order_index: int = order_index
         self.cells: dict = cells or {}
+
 
 # to create a Table instance when a new table project is created, and then manipulate the columns and rows as needed. For example:
 # new_table = Table(

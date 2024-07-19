@@ -1,11 +1,11 @@
 from .user import User, UserCreate, UserUpdate, UserInDB
-from .project import Project, ProjectCreate, ProjectUpdate, ProjectInDB
+from .project import ProjectCreate, ProjectUpdate, ProjectInDB
 from .table import Table, TableCreate, TableUpdate, TableInDB, ColumnSchema, RowSchema
 from .token import (
     RefreshTokenCreate,
     RefreshTokenUpdate,
     RefreshToken,
-    Token,
+    TokenSchema,
     TokenPayload,
     MagicTokenPayload,
     WebToken,

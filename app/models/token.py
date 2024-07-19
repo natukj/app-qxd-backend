@@ -5,9 +5,10 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from db.base_class import Base
 
-if TYPE_CHECKING:
-    from .user import User
+#if TYPE_CHECKING:
+    # from .user import User
 
+from . import User
 
 class Token(Base):
     token: Mapped[str] = mapped_column(primary_key=True, index=True)

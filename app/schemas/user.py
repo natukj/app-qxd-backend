@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
 from uuid import UUID
-from app.schemas.base_schema import BaseSchema
+from schemas.base_schema import BaseSchema
 
 class UserBase(BaseSchema):
     email: EmailStr
