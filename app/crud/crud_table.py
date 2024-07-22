@@ -49,7 +49,10 @@ class CRUDTable(CRUDBase[Table, TableCreate, TableUpdate]):
         return table
 
     async def add_row(self, db: AsyncSession, *, table: Table, row: RowSchema) -> Table:
+        if table.rows is None:
+            table.rows = []
         table.rows.append(row.model_dump())
+        db.add(table)
         await db.commit()
         await db.refresh(table)
         return table
