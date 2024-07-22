@@ -26,7 +26,6 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(index=True, nullable=True)
     email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     hashed_password: Mapped[Optional[str]] = mapped_column(nullable=True)
-    projects: Mapped[list["Project"]] = relationship(back_populates="user")
     # AUTHENTICATION AND PERSISTENCE
     totp_secret: Mapped[Optional[str]] = mapped_column(nullable=True)
     totp_counter: Mapped[Optional[int]] = mapped_column(nullable=True)
@@ -36,6 +35,7 @@ class User(Base):
     refresh_tokens: Mapped[list["Token"]] = relationship(
         foreign_keys="[Token.authenticates_id]", back_populates="authenticates", lazy="dynamic"
     )
+    projects: Mapped[list["Project"]] = relationship(back_populates="user")
 
 from . import Token
 from .project import Project

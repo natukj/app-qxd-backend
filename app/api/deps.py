@@ -1,5 +1,5 @@
 from typing import AsyncGenerator, Optional
-from fastapi import Form, Depends, HTTPException, status
+from fastapi import Form, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
@@ -9,21 +9,25 @@ import crud, models, schemas
 from core.config import settings
 from db.session import SessionLocal
 
-class OAuth2EmailPasswordRequestForm(OAuth2PasswordRequestForm):
-    def __init__(
-        self,
-        *,
-        grant_type: str = Form(default=None, regex="password"),
-        username: str = Form(),
-        email: str = Form(),
-        password: str = Form(),
-        scope: str = Form(default=""),
-        client_id: str | None = Form(default=None),
-        client_secret: str | None = Form(default=None),
-    ):
-        super().__init__(grant_type=grant_type, username=username, password=password, 
-                         scope=scope, client_id=client_id, client_secret=client_secret)
-        self.email = email
+# class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
+#     async def __call__(self, request: Request) -> Optional[str]:
+#         authorization: str = request.headers.get("Authorization")
+#         scheme, _, param = authorization.partition(" ") if authorization else (None, None, None)
+#         if not authorization or scheme.lower() != "bearer":
+#             if self.auto_error:
+#                 raise HTTPException(
+#                     status_code=status.HTTP_401_UNAUTHORIZED,
+#                     detail="Not authenticated",
+#                     headers={"WWW-Authenticate": "Bearer"},
+#                 )
+#             else:
+#                 return None
+#         return param
+
+# oauth2_scheme = OAuth2PasswordBearerWithCookie(
+#     tokenUrl=f"{settings.API_V1_STR}/login/oauth",
+#     auto_error=False
+# )
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/oauth",
@@ -54,9 +58,12 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ) -> models.User:
+    print(f'get_current_user: token={token}')
     token_payload = await get_token_payload(token)
+    print(f'get_current_user: token_payload={token_payload}')
     user = await crud.user.get(db, id=token_payload.sub)
-    if token_payload.refresh or not token_payload.totp:
+    print(f'get_current_user: user={user}')
+    if token_payload.refresh:
         # refresh token is not a valid access token and 
         # TOTP False cannot be used to validate TOTP
         raise HTTPException(
@@ -126,3 +133,20 @@ async def get_current_active_admin_user(
     if not crud.user.is_admin(current_user):
         raise HTTPException(status_code=400, detail="The user is not an admin user")
     return current_user
+
+
+# class OAuth2EmailPasswordRequestForm(OAuth2PasswordRequestForm):
+#     def __init__(
+#         self,
+#         *,
+#         grant_type: str = Form(default=None, regex="password"),
+#         username: str = Form(),
+#         email: str = Form(),
+#         password: str = Form(),
+#         scope: str = Form(default=""),
+#         client_id: str | None = Form(default=None),
+#         client_secret: str | None = Form(default=None),
+#     ):
+#         super().__init__(grant_type=grant_type, username=username, password=password, 
+#                          scope=scope, client_id=client_id, client_secret=client_secret)
+#         self.email = email

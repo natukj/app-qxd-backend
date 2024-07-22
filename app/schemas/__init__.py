@@ -1,5 +1,5 @@
 from .user import User, UserCreate, UserUpdate, UserInDB
-from .project import ProjectCreate, ProjectUpdate, ProjectInDB
+from .project import ProjectAdd, ProjectCreate, ProjectUpdate, ProjectInDB, ProjectSchema
 from .table import Table, TableCreate, TableUpdate, TableInDB, ColumnSchema, RowSchema
 from .token import (
     RefreshTokenCreate,

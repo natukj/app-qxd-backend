@@ -1,6 +1,9 @@
 from schemas.base_schema import UUIDSchema, BaseSchema
 from uuid import UUID
 
+class ProjectAdd(BaseSchema):
+    projectId: UUID
+
 class ProjectBase(BaseSchema):
     name: str
     description: str | None = None

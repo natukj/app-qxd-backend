@@ -19,6 +19,7 @@ async def login_with_oauth2(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
+    print("Received form data:", form_data.__dict__)
     user = await crud.user.authenticate(
         db, email=form_data.username, password=form_data.password
     )
@@ -57,22 +58,10 @@ async def signup_with_oauth2(
     if not user:
         raise HTTPException(status_code=400, detail="Signup failed")
     
-    access_token = security.create_access_token(subject=user.id)
-    refresh_token = security.create_refresh_token(subject=user.id)
-    
-    print(f"Debug - access_token: {access_token}")
-    print(f"Debug - refresh_token: {refresh_token}")
-    print(f"Debug - user.id: {user.id}")
-    try:
-        await crud.token.create(db=db, obj_in=refresh_token, user_obj=user)
-    except ValueError as e:
-        # Handle the case where the token already exists
-        print(f"Error creating token: {str(e)}")
-        await crud.user.remove(db=db, id=user.id)
-        raise HTTPException(status_code=400, detail="Token creation failed")
-    
+    refresh_token = security.create_refresh_token(subject=user.id)    
+    await crud.token.create(db=db, obj_in=refresh_token, user_obj=user)
     return {
-        "access_token": access_token,
+        "access_token": security.create_access_token(subject=user.id),
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
