@@ -25,18 +25,21 @@ if TYPE_CHECKING:
     from .user import User
     from .token import Token
     from .project import Project
-    from .table import Table
+    #from .table import Table
+    from .agtable import AGTable
 else:
     User = None
     Token = None
     Project = None
-    Table = None
+    #Table = None
+    AGTable = None
 
 def lazy_load():
-    global User, Token, Project, Table
+    global User, Token, Project, AGTable
     from .user import User
     from .token import Token
     from .project import Project
-    from .table import Table
+    #from .table import Table
+    from .agtable import AGTable
 
-__all__ = ["User", "Token", "Project", "Table", "lazy_load"]
+__all__ = ["User", "Token", "Project", "AGTable", "lazy_load"]

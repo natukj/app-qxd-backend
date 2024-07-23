@@ -8,14 +8,21 @@ async def determine_classification_and_award(employee_data: Dict[str, Any]) -> T
     full_name = employee_data["fullName"]
     award_name = f"{full_name} Award"
     award_id = f"MA000{random.randint(10, 99)}"
+    classification = f"{full_name} Classification"
+    classification_id = f"MA000{random.randint(10, 99)}"
     
     award_data = {
         award_name: {
             "award_id": award_id
         }
     }
-    classification = f"{full_name} Classification"
-    return award_data, classification
+    classification_data = {
+        classification: {
+            "classification_id": classification_id
+        }
+    }
+    
+    return award_data, classification_data
 
 async def determine_column_data(column_name: str, row_data: Dict[str, Any]) -> str:
     load_time = random.randint(1, 5)
