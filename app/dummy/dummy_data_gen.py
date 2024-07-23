@@ -28,7 +28,11 @@ async def determine_column_data(column_name: str, row_data: Dict[str, Any]) -> s
     load_time = random.randint(1, 5)
     await asyncio.sleep(load_time) 
     full_name = row_data["EmployeeData"]["fullName"]
-    return f"{full_name}: {column_name}"
+    column_name = f"{full_name} {column_name}"
+    column_data = {
+        column_name: f"{full_name} Data"
+    }
+    return column_data
 
 async def generate_row_data(row_data: Dict[str, Any]) -> AsyncGenerator[Dict[str, Any], None]:
     columns_to_process = row_data.pop('Columns', {})

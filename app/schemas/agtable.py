@@ -33,6 +33,7 @@ class AGTableRowBase(BaseSchema):
     order: int
 
 class AGTableRowCreate(AGTableRowBase):
+    id: Optional[UUID] = None
     table_id: UUID
 
 class AGTableRowUpdate(AGTableRowBase):

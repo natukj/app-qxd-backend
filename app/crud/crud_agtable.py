@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import func, and_, select, delete
 
 from crud.base import CRUDBase
 from models.agtable import AGTable, AGTableColumn, AGTableRow, AGTableCell
@@ -12,6 +12,8 @@ from schemas.agtable import (
     AGTableRowCreate, AGTableRowUpdate,
     AGTableCellCreate, AGTableCellUpdate
 )
+
+# del: cell -> row -> column -> table
 
 class CRUDAGTable(CRUDBase[AGTable, AGTableCreate, AGTableUpdate]):
     async def get_by_project(self, db: AsyncSession, *, project_id: UUID) -> Optional[AGTable]:
@@ -103,6 +105,26 @@ class CRUDAGTableColumn(CRUDBase[AGTableColumn, AGTableColumnCreate, AGTableColu
             select(func.count()).select_from(AGTableColumn).filter(AGTableColumn.table_id == table_id)
         )
         return result.scalar_one()
+    
+    async def remove_by_name(self, db: AsyncSession, *, table_id: UUID, name: str) -> AGTableColumn:
+        column = await self.get_by_name(db, table_id=table_id, name=name)
+        if column is None:
+            raise ValueError(f"Column with name {name} not found")
+
+        # delete all cells associated with this column
+        delete_cells_stmt = delete(AGTableCell).where(AGTableCell.column_id == column.id)
+        await db.execute(delete_cells_stmt)
+        # delete the column
+        await db.delete(column)
+        await db.commit()
+        return column
+
+    async def reorder_columns(self, db: AsyncSession, *, table_id: UUID) -> None:
+        columns = await self.get_by_table(db, table_id=table_id)
+        for index, column in enumerate(columns, start=1):
+            column.order = index
+            await db.merge(column)
+        await db.commit()
 
 class CRUDAGTableRow(CRUDBase[AGTableRow, AGTableRowCreate, AGTableRowUpdate]):
     async def create_with_cells(
@@ -123,6 +145,27 @@ class CRUDAGTableRow(CRUDBase[AGTableRow, AGTableRowCreate, AGTableRowUpdate]):
     async def get_by_table(self, db: AsyncSession, *, table_id: UUID) -> List[AGTableRow]:
         result = await db.execute(select(AGTableRow).filter(AGTableRow.table_id == table_id))
         return result.scalars().all()
+    
+    async def remove_multi(self, db: AsyncSession, *, ids: List[UUID], table_id: UUID) -> List[AGTableRow]:
+        # delete all cells associated with these rows
+        delete_cells_stmt = (
+            delete(AGTableCell)
+            .where(AGTableCell.row_id.in_(ids))
+        )
+        await db.execute(delete_cells_stmt)
+
+        # delete the rows
+        query = select(AGTableRow).filter(and_(AGTableRow.id.in_(ids), AGTableRow.table_id == table_id))
+        result = await db.execute(query)
+        rows = result.scalars().all()
+
+        delete_rows_stmt = (
+            delete(AGTableRow)
+            .where(AGTableRow.id.in_(ids))
+        )
+        await db.execute(delete_rows_stmt)
+        await db.commit()
+        return rows
 
 class CRUDAGTableCell(CRUDBase[AGTableCell, AGTableCellCreate, AGTableCellUpdate]):
     async def get_by_row(self, db: AsyncSession, *, row_id: UUID) -> List[AGTableCell]:
