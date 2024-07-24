@@ -75,6 +75,20 @@ async def get_project(
     return project
 
 ### Modern Award Classification endpoints
+@router.get("/{project_id}/table")
+async def get_project_table(
+    project_id: UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    table = await crud.agtable.get_by_project(db=db, project_id=project_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    full_table = await crud.agtable.get_full_table(db=db, table_id=table.id)
+    return full_table
+
+
 @router.post("/{project_id}/rows/add")
 async def add_project_row(
     project_id: UUID,
@@ -111,13 +125,15 @@ async def add_project_row(
     else:
         new_row = await crud.agtable_row.create(db=db, obj_in=schemas.AGTableRowCreate(**row_create_data))
 
-    # create the 'Employee' cell with EmployeeData
+    # create the 'Employee' cell with EmployeeData (conforming to FE schema)
     employee_data = row_data.get('EmployeeData', {})
+    employee_name = employee_data.get('fullName', '')
     employee_cell_data = schemas.AGTableCellCreate(
         row_id=new_row.id,
         column_id=employee_column.id,
         value={
-            employee_data.get('fullName', ''): employee_data
+            "Employee": employee_name,
+            "EmployeeData": employee_data
         }
     )
     await crud.agtable_cell.create(db=db, obj_in=employee_cell_data)
