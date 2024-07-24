@@ -1,8 +1,16 @@
 import secrets
 from typing import Any, Dict, List, Optional, Union
+import os
 
 from pydantic import AnyHttpUrl, EmailStr, HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings
+
+class Neo4jInstanceConfig:
+    def __init__(self, uri: str, user: str, password: str, database: str):
+        self.uri = uri
+        self.user = user
+        self.password = password
+        self.database = database
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "qxdai"
@@ -23,7 +31,7 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080"]
     # GENERAL SETTINGS
     MULTI_MAX: int = 20
-    # COMPONENT SETTINGS
+    # POSTGRESQL SETTINGS
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "jamesqxd"
     POSTGRES_PASSWORD: Optional[str] = None
@@ -46,5 +54,44 @@ class Settings(BaseSettings):
             return f"postgresql+asyncpg://{user}:{password}@{host}/{db}"
         else:
             return f"postgresql+asyncpg://{user}@{host}/{db}"
+    # NEO4J SETTINGS
+    NEO4J_INSTANCES: Dict[str, Neo4jInstanceConfig] = {
+        "local": Neo4jInstanceConfig(
+            uri="bolt://localhost:7687",
+            user="neo4j",
+            password=None,
+            database="neo4j"
+        ),
+        "gcp": Neo4jInstanceConfig(
+            uri=os.environ.get("GCP_NEO4J_URI"),
+            user="neo4j",
+            password=os.environ.get("GCP_NEO4J_PW"),
+            database="neo4j"
+        ),
+        # add more instances here
+    }
+
+    ACTIVE_NEO4J_INSTANCE: str = "gcp"
+
+    @property
+    def neo4j_connection_details(self):
+        instance = self.NEO4J_INSTANCES[self.ACTIVE_NEO4J_INSTANCE]
+        return {
+            "uri": instance.uri,
+            "user": instance.user,
+            "password": instance.password,
+            "database": instance.database,
+        }
+
+    @property
+    def neo4j_connection_uri(self):
+        details = self.neo4j_connection_details
+        if not all([details["uri"], details["user"], details["database"]]):
+            raise ValueError("Neo4j connection details are incomplete")
+
+        if details["password"]:
+            return f"{details['uri']}?user={details['user']}&password={details['password']}&database={details['database']}"
+        else:
+            return f"{details['uri']}?user={details['user']}&database={details['database']}"
 
 settings = Settings()
