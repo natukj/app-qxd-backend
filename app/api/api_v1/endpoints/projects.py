@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from neo4j import AsyncSession as Neo4jAsyncSession
+import asyncio
 from typing import List, Dict, Any
 from uuid import UUID
 import json
 
 import crud, models, schemas, dummy
+from db import ma_db
 from api import deps
 
 router = APIRouter()
@@ -94,6 +97,7 @@ async def add_project_row(
     project_id: UUID,
     row_data: Dict[str, Any],
     db: AsyncSession = Depends(deps.get_db),
+    gdb: Neo4jAsyncSession = Depends(deps.get_gdb),
     current_user: models.User = Depends(deps.get_current_user)
 ):  
     project = await crud.project.get(db=db, id=project_id, user=current_user)
@@ -138,6 +142,28 @@ async def add_project_row(
     )
     await crud.agtable_cell.create(db=db, obj_in=employee_cell_data)
 
+    # testing gdb retrieval
+    industry = employee_data.get('industry')
+    subindustry = employee_data.get('subIndustry')
+    print(f"\nIndustry: {industry}, Subindustry: {subindustry}")
+
+    award_data = ma_db.get_awards(industry, subindustry)
+    print(f"\nAwards: {json.dumps(award_data, indent=2)}\n")
+
+    if not award_data:
+        print("No awards found for the given industry and subindustry.")
+        # Handle the case where no awards are found
+        return {"error": "No awards found for the given industry and subindustry."}
+
+    tasks = [crud.ma_gdb.get_award_clauses(gdb, [award]) for award in award_data]
+    results = await asyncio.gather(*tasks)
+
+    for award, (output_str, references) in zip(award_data, results):
+        print('\n\n\n')
+        print(f"Award: {award}")  # Print the entire award dictionary
+        print(f"Output preview: {output_str[:200]}...")
+        print(f"Number of references: {len(references)}")
+    # end testing gdb retrieval
     # TEMP function to stream the row data
     async def generate_row_data_stream():
         async for result in dummy.generate_row_data(row_data):

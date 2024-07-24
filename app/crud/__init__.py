@@ -8,4 +8,4 @@ from .crud_agtable import (
     agtable_row,
     agtable_cell
 )
-from .crud_gdb import gdb
+from .crud_gdb import ma_gdb

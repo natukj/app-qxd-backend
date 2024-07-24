@@ -68,4 +68,4 @@ class CRUDGDB:
                     )
         return output_str, references
     
-gdb = CRUDGDB()
+ma_gdb = CRUDGDB()
