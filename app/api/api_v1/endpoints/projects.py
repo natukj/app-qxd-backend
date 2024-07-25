@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 from uuid import UUID
 import json
 
-import crud, models, schemas, dummy
+import crud, models, schemas, dummy, agents
 from db import ma_db
 from api import deps
 
@@ -155,18 +155,19 @@ async def add_project_row(
         # Handle the case where no awards are found
         return {"error": "No awards found for the given industry and subindustry."}
 
-    tasks = [crud.ma_gdb.get_award_clauses(gdb, [award]) for award in award_data]
+    tasks = [crud.ma_gdb.get_award_coverage_clauses(gdb, [award]) for award in award_data]
     results = await asyncio.gather(*tasks)
-
+    award_info = ""
     for award, (output_str, references) in zip(award_data, results):
         print('\n\n\n')
         print(f"Award: {award}")  # Print the entire award dictionary
         print(f"Output preview: {output_str[:200]}...")
         print(f"Number of references: {len(references)}")
+        award_info += output_str
     # end testing gdb retrieval
     # TEMP function to stream the row data
     async def generate_row_data_stream():
-        async for result in dummy.generate_row_data(row_data):
+        async for result in agents.generate_row_data(row_data, award_info):
             # For each piece of generated data, create or update the corresponding cell
             for column_name, value in result.items():
                 # get or create the column

@@ -1,0 +1,1 @@
+from .ma_agents import generate_row_data

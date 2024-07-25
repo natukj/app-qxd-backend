@@ -26,13 +26,15 @@ async def groq_client_chat_completion_stream(
         print(f"Groq Streaming Request failed with exception: {e}")
         raise
 
-async def groq_client_chat_completion_request(messages, model="llama3-8b-8192"):
+async def groq_client_chat_completion_request(messages, tools, MODEL="llama3-groq-70b-8192-tool-use-preview", tool_choice="auto"):
     try:
         response = await client.chat.completions.create(
-            model=model,
+            model=MODEL,
             messages=messages,
-            max_tokens=200,
-        )
+            tools=tools,
+            tool_choice=tool_choice,
+            max_tokens=4096
+    )
         return response
     except Exception as e:
         print(f"Groq Request failed with exception: {e}")

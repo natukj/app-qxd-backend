@@ -19,7 +19,7 @@ class CRUDGDB:
         return sorted(clauses, key=lambda clause: sorting_key(clause['clause']['key']))
 
     @staticmethod
-    async def fetch_clauses(session: AsyncSession, award_id: str, coverage_clauses: List[str]) -> List[Dict[str, Any]]:
+    async def fetch_coverage_clauses(session: AsyncSession, award_id: str, coverage_clauses: List[str]) -> List[Dict[str, Any]]:
         where_conditions = []
         for clause in coverage_clauses:
             if clause.startswith('Schedule'):
@@ -45,12 +45,12 @@ class CRUDGDB:
             return []
 
     @staticmethod
-    async def get_award_clauses(session: AsyncSession, award_data: List[Dict[str, Any]]) -> Tuple[str, Dict[str, ReferenceContent]]:
+    async def get_award_coverage_clauses(session: AsyncSession, award_data: List[Dict[str, Any]]) -> Tuple[str, Dict[str, ReferenceContent]]:
         output_str = ""
         references = {}
         for award in award_data:
             output_str += f"\n--- Award: {award['award_name']} (ID: {award['award_id']}) ---\n"
-            clauses = await CRUDGDB.fetch_clauses(session, award['award_id'], award['coverage_clauses'])
+            clauses = await CRUDGDB.fetch_coverage_clauses(session, award['award_id'], award['coverage_clauses'])
             previous_section_name = None
             for clause in clauses:
                 clause_data = clause['clause']
