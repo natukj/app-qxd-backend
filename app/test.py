@@ -1,6 +1,7 @@
 import asyncio
 from neo4j import AsyncGraphDatabase, AsyncSession
 from core.config import settings
+from typing import List, Dict, Any, Tuple, Set
 import json
 import llm
 
@@ -51,10 +52,10 @@ def safe_str(input):
         print(f"Error converting to string: {e}")
         return ""
 
-async def print_hierarchy(hierarchy, indent=0, sections="", depth=0):
-    local_sections = sections  # Work with a local copy that accumulates the changes
-    prefix = "\t" * indent  # Using tab for indentation
-    if depth > 0:  # Add dash only for subsections and deeper
+async def format_hierarchy(hierarchy, indent=0, sections="", depth=0):
+    local_sections = sections
+    prefix = "\t" * indent
+    if depth > 0:
         prefix += "- "
 
     for section, details in hierarchy.items():
@@ -62,7 +63,7 @@ async def print_hierarchy(hierarchy, indent=0, sections="", depth=0):
         local_sections += (prefix + section_str + "\n")
         
         if 'subsections' in details and details['subsections']:
-            local_sections = await print_hierarchy(details['subsections'], indent + 1, local_sections, depth + 1)
+            local_sections = await format_hierarchy(details['subsections'], indent + 1, local_sections, depth + 1)
     return local_sections
 
 async def get_award_section_hierarchy(award_id: str):
@@ -97,63 +98,116 @@ async def get_award_section_hierarchy(award_id: str):
         
         return sections
 
-def truncate_text(text, max_length=100):
-    return (text if len(text) <= max_length else text[:max_length] + '...').replace('\n', ' ')
-async def get_subsection_clauses(section_name):
+async def get_clauses(award_id: str, sections: List[str]) -> Dict[str, List[Dict[str, Any]]]:
     async with await neo4j_session_manager.get_session() as session:
-        query = """
-        MATCH (sec:Section {name: $section_name})-[:CONTAINS]->(sub:Subsection)
-        OPTIONAL MATCH (sub)-[:CONTAINS]->(clause:Clause)
-        OPTIONAL MATCH (clause)-[:REFERENCES]->(refClause:Clause)
-        RETURN sub.name AS subsection_name, 
-               clause.name AS clause_name, 
-               clause.id AS clause_id, 
-               clause.key AS clause_key, 
-               clause.content AS clause_content,
-               collect(refClause.name) AS ref_names, 
-               collect(refClause.id) AS ref_ids, 
-               collect(refClause.key) AS ref_keys, 
-               collect(refClause.content) AS ref_contents
+        conditions = " OR ".join([f"section.name = '{section}' OR subsection.name = '{section}'" for section in sections])
+    
+        query = f"""
+        MATCH (doc:Document {{name: $award_id}})-[:CONTAINS]->(section:Section)
+        OPTIONAL MATCH (section)-[:CONTAINS]->(subsection:Subsection)
+        OPTIONAL MATCH (section)-[:CONTAINS]->(clause:Clause)
+        OPTIONAL MATCH (subsection)-[:CONTAINS]->(subClause:Clause)
+        WITH section, subsection, clause, subClause
+        WHERE {conditions}
+        WITH section, subsection, 
+            CASE WHEN clause IS NOT NULL THEN clause ELSE subClause END AS finalClause
+        OPTIONAL MATCH (finalClause)-[:REFERENCES]->(refClause:Clause)
+        RETURN section.name AS section_name,
+            subsection.name AS subsection_name, 
+            finalClause.name AS clause_name, 
+            finalClause.id AS clause_id, 
+            finalClause.key AS clause_key, 
+            finalClause.content AS clause_content,
+            collect({{
+                name: refClause.name, 
+                id: refClause.id, 
+                key: refClause.key, 
+                content: refClause.content
+            }}) AS references
+        ORDER BY section.name, subsection.name, finalClause.key
         """
-        result = await session.run(query, section_name=section_name)
-        subsection_clauses = {}
+        
+        result = await session.run(query, award_id=award_id)
+        clauses_dict: Dict[str, List[Dict[str, Any]]] = {}
+        processed_clauses: Set[str] = set()
+        all_references: Dict[str, Dict[str, Any]] = {}
+
         async for record in result:
+            section_name = record["section_name"]
             subsection_name = record["subsection_name"]
-            if subsection_name not in subsection_clauses:
-                subsection_clauses[subsection_name] = []
+            
+            # Use section name if subsection is not available
+            key = subsection_name if subsection_name else section_name
+            
+            if key not in clauses_dict:
+                clauses_dict[key] = []
+            
+            clause_id = record["clause_id"]
+            if clause_id and clause_id not in processed_clauses:
+                processed_clauses.add(clause_id)
+                
+                clause_info = {
+                    "name": record["clause_name"],
+                    "id": clause_id,
+                    "key": record["clause_key"],
+                    "content": record["clause_content"],
+                    "references": []
+                }
+                
+                # Process references
+                for ref in record["references"]:
+                    if ref["id"]:
+                        if ref["id"] not in all_references:
+                            all_references[ref["id"]] = ref
+                        clause_info["references"].append(ref["id"])
+                
+                clauses_dict[key].append(clause_info)
+        
+        # Replace reference IDs with full reference information
+        for section_clauses in clauses_dict.values():
+            for clause in section_clauses:
+                clause["references"] = [all_references[ref_id] for ref_id in clause["references"] if ref_id in all_references]
+        
+        return clauses_dict
 
-            clause_info = f"{record['clause_name']} ({record['clause_key']}): {truncate_text(record['clause_content'])}"
-            ref_names = record["ref_names"]
-            ref_ids = record["ref_ids"]
-            ref_keys = record["ref_keys"]
-            ref_contents = record["ref_contents"]
-            references = []
-            for name, id, key, content in zip(ref_names, ref_ids, ref_keys, ref_contents):
-                if name:  # Ensure non-null reference
-                    references.append(f"Referenced: {name} ({key}): {truncate_text(content)}")
-            clause_entry = {"clause": clause_info, "references": references}
-            subsection_clauses[subsection_name].append(clause_entry)
-        return subsection_clauses
+section_name = ["Payment of wages", "Hours of Work"]
+award_id = "MA000065"
+clauses = asyncio.run(get_clauses(award_id, section_name))
+def print_formatted_clauses(clauses_dict: Dict[str, List[Dict[str, Any]]]):
+    for section, clauses in clauses_dict.items():
+        print(f"\n{'=' * 80}")
+        print(f"SECTION: {section}")
+        print(f"{'=' * 80}")
+        
+        for clause in clauses:
+            print(f"\n  CLAUSE: {clause['name']} (ID: {clause['id']}, Key: {clause['key']})")
+            print(f"  {'~' * 50}")
+            
+            # Print content (first 100 characters)
+            content_preview = clause['content'][:100] + "..." if len(clause['content']) > 100 else clause['content']
+            print(f"  Content: {content_preview}")
+            
+            # Print references
+            if clause['references']:
+                print("\n  References:")
+                for ref in clause['references']:
+                    ref_content_preview = ref['content'][:50] + "..." if len(ref['content']) > 50 else ref['content']
+                    print(f"    - {ref['name']} (ID: {ref['id']}, Key: {ref['key']})")
+                    print(f"      Content: {ref_content_preview}")
+            
+            print()  # Extra line for readability
 
-section_name = "Wages and Allowances"
-subsection_clauses = asyncio.run(get_subsection_clauses(section_name))
+    print(f"\n{'=' * 80}")
+    print("END OF CLAUSES")
+    print(f"{'=' * 80}")
 
-async def print_formatted_hierarchy(subsection_clauses):
-    for subsection, clauses in subsection_clauses.items():
-        print(f"Subsection: {subsection}")
-        for entry in clauses:
-            print(f"  - {entry['clause']}")
-            if entry['references']:
-                print("    References:")
-                for ref in entry['references']:
-                    print(f"      {ref}")
-        print("")
-asyncio.run(print_formatted_hierarchy(subsection_clauses))
+print_formatted_clauses(clauses)
+
 exit()
 award_id = "MA000065"
 hierarchy = asyncio.run(get_award_section_hierarchy(award_id))
 #asyncio.run(print_hierarchy(hierarchy))
-sections = asyncio.run(print_hierarchy(hierarchy))
+sections = asyncio.run(format_hierarchy(hierarchy))
 print('#'*50)
 print(sections)
 

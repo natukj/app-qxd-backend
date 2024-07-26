@@ -24,13 +24,13 @@ async def determine_classification_and_award(employee_data: Dict[str, Any]) -> T
     
     return award_data, classification_data
 
-async def determine_column_data(column_name: str, row_data: Dict[str, Any]) -> str:
+async def determine_column_data(column_name: str, additional_info: str, row_data: Dict[str, Any]) -> str:
     load_time = random.randint(1, 5)
     await asyncio.sleep(load_time) 
     full_name = row_data["EmployeeData"]["fullName"]
     column_name = f"{full_name} {column_name}"
     column_data = {
-        column_name: f"{full_name} Data"
+        column_name: f"{full_name} {additional_info}"
     }
     return column_data
 
@@ -60,7 +60,7 @@ async def generate_row_data(row_data: Dict[str, Any]) -> AsyncGenerator[Dict[str
 async def generate_column_data(column_name: str, additional_info: str, rows: List[Dict[str, Any]]) -> AsyncGenerator[Dict[str, Any], None]:
     async def process_row_column(row: Dict[str, Any]) -> Tuple[str, str, Any]:
         row_id = row['id']
-        column_data = await determine_column_data(column_name, row)
+        column_data = await determine_column_data(column_name, additional_info, row)
         return row_id, column_name, column_data
 
     tasks = [process_row_column(row) for row in rows]

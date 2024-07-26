@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Callable
 from fastapi import Form, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -25,10 +25,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def get_gdb() -> AsyncGenerator[Neo4jAsyncSession, None]:
     async with Neo4jSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
+        # try:
+        #     yield session
+        # finally:
+        #     await session.close()
 
 async def get_token_payload(token: str ) -> schemas.TokenPayload:
     try:

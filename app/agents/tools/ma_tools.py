@@ -41,3 +41,49 @@ classify_tools = [
         }
     }
 ]
+provisions_tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "employee_provisions",
+            "description": "Set the correct provisions and information about an employee based on their Modern Award and classification.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "provision_id": {
+                        "type": "string",
+                        "description": "Short and simple identifier for the provision."
+                    },
+                    "provision": {
+                        "type": "string",
+                        "description": "Your detailed determination of the correct provisions and information as per the Modern Award."
+                    },
+                    "provision_clauses": {
+                        "type": "string",
+                        "description": "Array of strings, containing all clauses that you used to make your award decision. For example: [\"1.1\", \"34.2\", \"A.1.14\"]"
+                    }
+                },
+                "required": ["provision_id", "provision", "provision_clauses"]
+            }
+        }
+    }
+]
+section_choice_tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "choose_sections",
+                "description": "Choose relevant sections from an Australian Modern Award",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "sections": {
+                            "type": "array",
+                            "description": "Verbatim sections from an Australian Modern Award",
+                        }
+                    },
+                    "required": ["sections"],
+                },
+            },
+        }
+    ]

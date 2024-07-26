@@ -100,6 +100,7 @@ async def add_project_row(
     gdb: Neo4jAsyncSession = Depends(deps.get_gdb),
     current_user: models.User = Depends(deps.get_current_user)
 ):  
+    print(row_data)
     project = await crud.project.get(db=db, id=project_id, user=current_user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -142,13 +143,11 @@ async def add_project_row(
     )
     await crud.agtable_cell.create(db=db, obj_in=employee_cell_data)
 
-    # testing gdb retrieval
+    # gdb retrieval
     industry = employee_data.get('industry')
     subindustry = employee_data.get('subIndustry')
-    print(f"\nIndustry: {industry}, Subindustry: {subindustry}")
 
     award_data = ma_db.get_awards(industry, subindustry)
-    print(f"\nAwards: {json.dumps(award_data, indent=2)}\n")
 
     if not award_data:
         print("No awards found for the given industry and subindustry.")
@@ -164,10 +163,10 @@ async def add_project_row(
         print(f"Output preview: {output_str[:200]}...")
         print(f"Number of references: {len(references)}")
         award_info += output_str
-    # end testing gdb retrieval
-    # TEMP function to stream the row data
+
+    # function to stream the row data
     async def generate_row_data_stream():
-        async for result in agents.generate_row_data(row_data, award_info):
+        async for result in agents.generate_row_data(gdb, row_data, award_info):
             # For each piece of generated data, create or update the corresponding cell
             for column_name, value in result.items():
                 # get or create the column
@@ -187,7 +186,7 @@ async def add_project_row(
                     value=value
                 )
                 await crud.agtable_cell.update_or_create(db=db, obj_in=cell_data)
-
+            # TODO send references
             yield json.dumps(result) + "\n"
 
     return StreamingResponse(generate_row_data_stream(), media_type="application/x-ndjson")
