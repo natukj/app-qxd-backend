@@ -1,5 +1,5 @@
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
-
+from uuid import UUID, uuid4
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,6 +40,16 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await db.refresh(db_obj)
         return db_obj
 
+    async def create_with_id(self, db: AsyncSession, *, obj_in: CreateSchemaType) -> ModelType:
+        obj_in_data = obj_in.model_dump(exclude_unset=True)
+        if 'id' not in obj_in_data or obj_in_data['id'] is None:
+            obj_in_data['id'] = uuid4()
+        db_obj = self.model(**obj_in_data)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+
     async def update(
         self,
         db: AsyncSession,
@@ -51,7 +61,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True)
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])

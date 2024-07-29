@@ -1,3 +1,5 @@
+from .ma_db_init import ma_db
+
 from .dummy_db import (
     read_db,
     write_db,

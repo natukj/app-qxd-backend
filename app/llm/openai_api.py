@@ -26,6 +26,25 @@ async def openai_client_chat_completion_request(messages, model="gpt-4o", temper
         print(f"OpenAI API Error: {e}")
         raise
 
+
+@retry(
+    wait=wait_random_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type((Exception)),
+    before_sleep=lambda retry_state: print(f"Retrying attempt {retry_state.attempt_number} for OAI completion request...")
+)
+async def openai_client_tool_completion_request(messages, tools, tool_choice="auto", model="gpt-4o"):
+    try:
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+        )
+        return response
+    except openai.APIError as e:
+        print(f"OpenAI API Error: {e}")
+        raise
+
 @retry(
     wait=wait_random_exponential(multiplier=1, min=4, max=60),
     retry=retry_if_exception_type((Exception)),

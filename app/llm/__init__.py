@@ -6,6 +6,7 @@ from .groq_api import (
 from .openai_api import (
     openai_chat_completion_request,
     openai_client_chat_completion_request,
+    openai_client_tool_completion_request,
     openai_client_embedding_request,
 )
 from .claude_api import (
