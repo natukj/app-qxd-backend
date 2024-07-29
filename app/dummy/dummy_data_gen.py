@@ -37,7 +37,6 @@ async def determine_column_data(column_name: str, additional_info: str, row_data
 async def generate_row_data(row_data: Dict[str, Any]) -> AsyncGenerator[Dict[str, Any], None]:
     columns_to_process = row_data.pop('Columns', {})
     
-    # Determine Classification and Award
     award, classification = await determine_classification_and_award(row_data["EmployeeData"])
     row_data["Award"] = award
     row_data["Classification"] = classification

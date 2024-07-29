@@ -22,4 +22,5 @@ pip-log.txt
 .tox
 *.mo
 .s3cfg
-*_toc.json
+app/db/2024_cindy_industry_grouped_combined.json
+*test*
