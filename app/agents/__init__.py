@@ -1,1 +1,1 @@
-from .ma_agents import generate_row_data
+from .ma_agents import generate_row_data, generate_column_data

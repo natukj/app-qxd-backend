@@ -5,6 +5,7 @@ from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from neo4j import AsyncSession as Neo4jAsyncSession
+from neo4j import AsyncDriver
 
 import crud, models, schemas
 from core.config import settings
@@ -23,13 +24,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-async def get_gdb() -> AsyncGenerator[Neo4jAsyncSession, None]:
-    async with Neo4jSessionLocal() as session:
-        yield session
-        # try:
-        #     yield session
-        # finally:
-        #     await session.close()
+async def get_gdb() -> AsyncGenerator[tuple[Neo4jAsyncSession, AsyncDriver], None]:
+    # TODO: implement Neo4jSessionManager to manage multiple instances
+    async with Neo4jSessionLocal() as (session, driver):
+        yield session, driver
 
 async def get_token_payload(token: str ) -> schemas.TokenPayload:
     try:

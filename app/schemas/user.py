@@ -36,8 +36,7 @@ class User(UserInDBBase):
     hashed_password: bool = Field(default=False, alias="password")
     totp_secret: bool = Field(default=False, alias="totp")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True)
 
     @field_validator("hashed_password")
     def evaluate_hashed_password(cls, hashed_password):
