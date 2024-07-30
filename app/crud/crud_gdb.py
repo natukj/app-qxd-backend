@@ -111,16 +111,17 @@ class CRUDGDB:
                     previous_section_name = clause_data['name']
                 output_str += clause_data['content'] + "\n"
                 if clause_data['key'] not in references:
-                    references[clause_data['key']] = ReferenceContent(
-                        id=clause_data['id'],
-                        key=clause_data['key'],
-                        title=clause_data['name'],
-                        content=clause_data['content']
-                    )
+                    references[clause_data['key']] = {
+                        'id': clause_data['id'],
+                        'key': clause_data['key'],
+                        'title': clause_data['name'],
+                        'content': clause_data['content']
+                    }
         return output_str, references
     
     @staticmethod
     async def fetch_clauses(session: AsyncSession, award_id: str, sections: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+        # TODO revisit this query
         conditions = " OR ".join([f"section.name = '{section}' OR subsection.name = '{section}'" for section in sections])
     
         query = f"""
@@ -158,7 +159,7 @@ class CRUDGDB:
             section_name = record["section_name"]
             subsection_name = record["subsection_name"]
             
-            # Use section name if subsection is not available
+            # this seems suboptimal
             key = subsection_name if subsection_name else section_name
             
             if key not in clauses_dict:
@@ -176,7 +177,6 @@ class CRUDGDB:
                     "references": []
                 }
                 
-                # Process references
                 for ref in record["references"]:
                     if ref["id"]:
                         if ref["id"] not in all_references:
@@ -185,7 +185,6 @@ class CRUDGDB:
                 
                 clauses_dict[key].append(clause_info)
         
-        # Replace reference IDs with full reference information
         for section_clauses in clauses_dict.values():
             for clause in section_clauses:
                 clause["references"] = [all_references[ref_id] for ref_id in clause["references"] if ref_id in all_references]
@@ -207,12 +206,13 @@ class CRUDGDB:
                     for ref in clause['references']:
                         output_str += f"{ref['id']} (ref: {ref['key']})\n"
                         output_str += ref['content'] + "\n"
-                        references[ref['key']] = ReferenceContent(
-                            id=ref['id'],
-                            key=ref['key'],
-                            title=ref['name'],
-                            content=ref['content']
-                        )
+                        if ref['key'] not in references:
+                            references[ref['key']] = {
+                                'id': ref['id'],
+                                'key': ref['key'],
+                                'title': ref['name'],
+                                'content': ref['content']
+                            }
         return output_str, references
 
 

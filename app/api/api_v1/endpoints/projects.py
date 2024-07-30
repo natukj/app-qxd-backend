@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from neo4j import AsyncSession as Neo4jAsyncSession
+from neo4j import AsyncDriver
 import asyncio
 from typing import List, Dict, Any
 from uuid import UUID
 import json
 
-import crud, models, schemas, dummy, agents
+import crud, models, schemas, agents
 from db import ma_db
 from api import deps
 
@@ -97,7 +98,7 @@ async def add_project_row(
     project_id: UUID,
     row_data: Dict[str, Any],
     db: AsyncSession = Depends(deps.get_db),
-    gdb: Neo4jAsyncSession = Depends(deps.get_gdb),
+    gdb: tuple[Neo4jAsyncSession, AsyncDriver] = Depends(deps.get_gdb),
     current_user: models.User = Depends(deps.get_current_user)
 ):  
     print(row_data)
@@ -143,31 +144,16 @@ async def add_project_row(
     )
     await crud.agtable_cell.create(db=db, obj_in=employee_cell_data)
 
-    # gdb retrieval
     industry = employee_data.get('industry')
     subindustry = employee_data.get('subIndustry')
-
     award_data = ma_db.get_awards(industry, subindustry)
 
     if not award_data:
-        print("No awards found for the given industry and subindustry.")
-        # Handle the case where no awards are found
-        return {"error": "No awards found for the given industry and subindustry."}
-
-    tasks = [crud.ma_gdb.get_award_coverage_clauses(gdb, [award]) for award in award_data]
-    results = await asyncio.gather(*tasks)
-    award_info = ""
-    for award, (output_str, references) in zip(award_data, results):
-        print('\n\n\n')
-        print(f"Award: {award}")  # Print the entire award dictionary
-        print(f"Output preview: {output_str[:200]}...")
-        print(f"Number of references: {len(references)}")
-        award_info += output_str
+        raise HTTPException(status_code=404, detail="No awards found for this industry")
 
     # function to stream the row data
     async def generate_row_data_stream():
-        async for result in agents.generate_row_data(gdb, row_data, award_info):
-            # For each piece of generated data, create or update the corresponding cell
+        async for result in agents.generate_row_data(gdb[0], row_data, award_data):
             for column_name, value in result.items():
                 # get or create the column
                 column = await crud.agtable_column.get_by_name(db=db, table_id=project.agtable.id, name=column_name)
@@ -177,16 +163,18 @@ async def add_project_row(
                         table_id=project.agtable.id,
                         name=column_name,
                         order=column_count + 1
+                        # it doesn't matter that we're not passing additional_info here
+                        # this should never be called 
                     ))
-
                 # create or update the cell
                 cell_data = schemas.AGTableCellCreate(
                     row_id=new_row.id,
                     column_id=column.id,
                     value=value
                 )
+                # now adding the references to the cells - not scalable
                 await crud.agtable_cell.update_or_create(db=db, obj_in=cell_data)
-            # TODO send references
+                
             yield json.dumps(result) + "\n"
 
     return StreamingResponse(generate_row_data_stream(), media_type="application/x-ndjson")
@@ -219,8 +207,9 @@ async def add_project_column(
     column_data: Dict[str, str] = Body(..., embed=True),
     rows: List[Dict[str, Any]] = Body(...),
     db: AsyncSession = Depends(deps.get_db),
+    gdb: tuple[Neo4jAsyncSession, AsyncDriver] = Depends(deps.get_gdb),
     current_user: models.User = Depends(deps.get_current_user)
-):
+):  
     project = await crud.project.get(db=db, id=project_id, user=current_user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -239,9 +228,8 @@ async def add_project_column(
             additional_info=column_data.get('additionalInfo', '')
         )
     )
-
     async def generate_column_data_stream():
-        async for result in dummy.generate_column_data(column_data['name'], column_data.get('additionalInfo', ''), rows):
+        async for result in agents.generate_column_data(gdb[1], column_data, rows): # maybe all gdb instances should use driver > session bc coroutine
             for row_id, column_value in result.items():
                 # create or update the cell for this row and the new column
                 cell_data = schemas.AGTableCellCreate(

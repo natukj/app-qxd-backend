@@ -1,4 +1,4 @@
-from neo4j import AsyncGraphDatabase, AsyncSession
+from neo4j import AsyncGraphDatabase, AsyncSession, AsyncDriver
 from core.config import settings
 
 class Neo4jSessionLocal:
@@ -6,9 +6,9 @@ class Neo4jSessionLocal:
         self.driver = None
         self.current_instance = settings.ACTIVE_NEO4J_INSTANCE
 
-    async def __aenter__(self) -> AsyncSession:
+    async def __aenter__(self) -> tuple[AsyncSession, AsyncDriver]:
         await self.initialise()
-        return self.driver.session()
+        return self.driver.session(), self.driver
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.driver:
